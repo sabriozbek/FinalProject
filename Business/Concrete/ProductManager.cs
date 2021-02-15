@@ -1,7 +1,10 @@
 ﻿using Business.Abstract;
+using Business.Constants;
+using Core.Utilities.Results;
 using DataAccess.Abstract;
 using DataAccess.Concrete.InMemory;
 using Entities.Concrete;
+using Entities.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,19 +20,43 @@ namespace Business.Concrete
             _IPrdouctDal = ıPrdouctDal;
         }
 
-        public List<Product> getAll()
+        public IResult Add(Product product)
         {
-            return _IPrdouctDal.getAll();
+            if (product.ProductName.Length<2)
+            {
+                return new ErrorResult(Messages.ProductNameInvalid);
+            }
+            _IPrdouctDal.Add(product);
+            return new SuccessResult(Messages.ProductAdded);
         }
 
-        public List<Product> getAllByCategoryId(int id)
+        public IDataResult<List<Product>> getAll()
         {
-            return _IPrdouctDal.getAll(p => p.CategoryId == id);
+            if (DateTime.Now.Hour==18)
+            {
+                return new ErrorDataResult<List<Product>>(Messages.MaintenanceTime);
+            }
+            return new SuccessDataResult<List<Product>>(_IPrdouctDal.getAll(),Messages.ProductsListed);
         }
 
-        public List<Product> getAllByUnitPrice(decimal min, decimal max)
+        public IDataResult<List<Product>>  getAllByCategoryId(int id)
         {
-            return _IPrdouctDal.getAll(p => p.UnitPrice >= min && p.UnitPrice <= max);
+            return new SuccessDataResult<List<Product>> ( _IPrdouctDal.getAll(p => p.CategoryId == id));
         }
+
+        public IDataResult<List<Product>> getAllByUnitPrice(decimal min, decimal max)
+        {
+            return new SuccessDataResult<List<Product>>(_IPrdouctDal.getAll(p => p.UnitPrice >= min && p.UnitPrice <= max));
+        }
+
+        public  IDataResult<Product>  GetById(int productId)
+        {
+            return  new SuccessDataResult<Product>( _IPrdouctDal.get(p => p.ProductId == productId));
+        }
+
+        public IDataResult< List<ProductDetailDTO>> GetProductDetails()
+        {
+            return  new SuccessDataResult<List<ProductDetailDTO>>( _IPrdouctDal.GetProductDetails());
+                }
     }
 }
